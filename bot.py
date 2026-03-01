@@ -13,12 +13,10 @@ from apscheduler.triggers.cron import CronTrigger
 
 
 # ================= НАСТРОЙКИ =================
-
-TOKEN = "7741414989:AAGaklBk54Q5kIecAd49CuDvcHgG_XPoqEE"  # ВСТАВЬ СВОЙ ТОКЕН
-
-BOY_ID = 1989532058  # его Telegram ID
-GIRL_ID = 5522901826  # твой Telegram ID
-
+# ВСТАВЬТЕ СВОИ ДАННЫЕ ПРЯМО СЮДА
+TOKEN = "7741414989:AAGaklBk54Q5kIecAd49CuDvcHgG_XPoqEE"  # ваш токен
+BOY_ID = 1989532058  # ВСТАВЬТЕ ID парня
+GIRL_ID = 5522901826  # ВСТАВЬТЕ свой ID
 # =============================================
 
 logging.basicConfig(level=logging.INFO)
@@ -39,20 +37,21 @@ started = False
 riddles = {
     1: {
         "date": "2026-03-01",
-        "question": "Привет, мой герой! 🥷🏼\n\n"
+        "question": "🎮 <b>День 1</b>\n\n"
+                    "Привет, мой герой! 🥷🏼\n\n"
                     "С 1 марта начинается твой праздничный квест 🎊\n"
                     "Каждый день новая загадка и кусочек адреса.\n\n"
                     "Готов? ❤️\n\n"
-                    "Загадка дня:\n"
+                    "<b>Загадка дня:</b>\n"
                     "Я есть у каждого, но не каждый умеет мной пользоваться.\n"
                     "Ты включаешь меня в нужный момент?\n\n"
-                    "Ответ напиши одним словом.",
+                    "<i>Ответ напиши одним словом.</i>",
         "answer": "мозг",
         "address_part": "Пушкинский р-н,"
     },
     2: {
         "date": "2026-03-02",
-        "question": "🎉 День 2\n\n"
+        "question": "🎉 <b>День 2</b>\n\n"
                     "Я ускоряюсь, когда ты волнуешься или смотришь на меня.\n"
                     "Что это?",
         "answer": "сердце",
@@ -60,7 +59,7 @@ riddles = {
     },
     3: {
         "date": "2026-03-03",
-        "question": "🎉 День 3\n\n"
+        "question": "🎉 <b>День 3</b>\n\n"
                     "Оно бывает раз в году.\n"
                     "Все его ждут.\n"
                     "И совсем скоро это наступит у тебя.\n"
@@ -70,7 +69,7 @@ riddles = {
     },
     4: {
         "date": "2026-03-04",
-        "question": "🎉 День 4\n\n"
+        "question": "🎉 <b>День 4</b>\n\n"
                     "Она появляется у меня на лице при виде тебя.\n"
                     "Что это?",
         "answer": "улыбка",
@@ -78,14 +77,14 @@ riddles = {
     },
     5: {
         "date": "2026-03-05",
-        "question": "🎉 День 5\n\n"
+        "question": "🎉 <b>День 5</b>\n\n"
                     "Как называется месяц, в котором ты родился?",
         "answer": "март",
         "address_part": "ул.,"
     },
     6: {
         "date": "2026-03-06",
-        "question": "🎉 День 6\n\n"
+        "question": "🎉 <b>День 6</b>\n\n"
                     "Их задувают, когда загадывают желания.\n"
                     "Что это?",
         "answer": "свечи",
@@ -93,9 +92,9 @@ riddles = {
     },
     7: {
         "date": "2026-03-07",
-        "question": "🎉 Финал\n\n"
+        "question": "🎉 <b>День 7 - ФИНАЛ!</b>\n\n"
                     "Ты готов приехать за своим сюрпризом?\n"
-                    "Напиши: готов",
+                    "Напиши: <b>готов</b>",
         "answer": "готов",
         "address_part": "Жду тебя здесь, время уточню позже ❤️"
     }
@@ -110,12 +109,21 @@ async def start_handler(message: Message):
 
     if message.from_user.id == BOY_ID:
         started = True
-        current_day = 1  # Сбрасываем день
-        await message.answer(
-            "Квест активирован 🥷🏼\n\n"
-            "Первая загадка придёт сегодня в 14:00 🎊"
+        current_day = 1
+        
+        # Приветственное сообщение
+        welcome_text = (
+            "🎊 <b>ДОБРО ПОЖАЛОВАТЬ В КВЕСТ!</b> 🎊\n\n"
+            "Привет, мой хороший! ❤️\n\n"
+            "Тебя ждёт 7 дней загадок и сюрпризов.\n"
+            "Каждый день в 14:00 я буду присылать тебе новую загадку.\n"
+            "Отвечай на них, и ты соберёшь весь адрес, где тебя ждёт подарок!\n\n"
+            "Первая загадка придёт <b>сегодня в 14:00</b>.\n"
+            "Удачи! 🥷🏼"
         )
-        # Уведомляем девушку
+        await message.answer(welcome_text)
+        
+        # Уведомление вам
         await bot.send_message(
             GIRL_ID,
             f"🎮 Квест начат! Сегодня 1 марта - первая загадка в 14:00"
@@ -124,13 +132,31 @@ async def start_handler(message: Message):
         await message.answer("Этот бот не для тебя 😉")
 
 
+# ================= КОМАНДА СТАТУС =================
+
+@dp.message(F.text == "/status")
+async def status_command(message: Message):
+    """Проверка статуса квеста (только для девушки)"""
+    if message.from_user.id == GIRL_ID:
+        today = datetime.now().strftime("%Y-%m-%d")
+        await message.answer(
+            f"📊 <b>Статус квеста:</b>\n\n"
+            f"Активирован: {'✅' if started else '❌'}\n"
+            f"Текущий день: {current_day}\n"
+            f"Сегодня: {today}\n"
+            f"Загадок всего: {len(riddles)}"
+        )
+    else:
+        await message.answer("Эта команда только для организатора 😉")
+
+
 # ================= ПРОВЕРКА ОТВЕТОВ =================
 
 @dp.message(F.text)
 async def check_answer(message: Message):
     global current_day, started
 
-    # Проверяем, что сообщение от нужного пользователя
+    # Проверяем, что сообщение от парня
     if message.from_user.id != BOY_ID:
         return
 
@@ -156,7 +182,7 @@ async def check_answer(message: Message):
             f"Держи кусочек пазла 🧩:\n\n{part}"
         )
 
-        # Уведомляем девушку
+        # Уведомляем вас
         await bot.send_message(
             GIRL_ID,
             f"✅ Он ответил правильно на день {current_day} (марта)"
@@ -176,7 +202,7 @@ async def check_answer(message: Message):
                 f"📍 <b>Полный адрес:</b>\n{full_address}"
             )
             
-            # Уведомляем девушку о завершении
+            # Уведомляем вас о завершении
             await bot.send_message(
                 GIRL_ID,
                 f"🏆 Квест завершён! 7 марта - он собрал весь адрес:\n{full_address}"
@@ -194,10 +220,9 @@ async def check_answer(message: Message):
 
 async def send_daily_riddle():
     """Отправляет загадку на текущий день"""
-    global current_day, started
+    global started
     
     today = datetime.now().strftime("%Y-%m-%d")
-    current_date = datetime.now().strftime("%d.%m.%Y")
     logging.info(f"Проверка загадок на {today}")
     
     if not started:
@@ -207,11 +232,11 @@ async def send_daily_riddle():
     # Ищем загадку на сегодня
     for day, data in riddles.items():
         if data["date"] == today:
-            if day <= 7:  # Проверяем, что день не превышает 7
+            if day <= 7:
                 await bot.send_message(BOY_ID, data["question"])
                 await bot.send_message(
                     GIRL_ID,
-                    f"📨 Отправлена загадка на {current_date} (день {day})"
+                    f"📨 Отправлена загадка на {today} (день {day})"
                 )
                 logging.info(f"Отправлена загадка на день {day}")
                 return
@@ -219,32 +244,15 @@ async def send_daily_riddle():
     logging.info("На сегодня загадок нет")
 
 
-# ================= КОМАНДА ДЛЯ ПРОВЕРКИ (ОПЦИОНАЛЬНО) =================
-
-@dp.message(F.text == "/status")
-async def status_command(message: Message):
-    """Проверка статуса квеста (только для девушки)"""
-    if message.from_user.id == GIRL_ID:
-        today = datetime.now().strftime("%Y-%m-%d")
-        await message.answer(
-            f"📊 <b>Статус квеста:</b>\n\n"
-            f"Активирован: {'✅' if started else '❌'}\n"
-            f"Текущий день: {current_day}\n"
-            f"Сегодня: {today}\n"
-            f"Загадок всего: {len(riddles)}"
-        )
-
-
 # ================= ЗАПУСК =================
 
 async def on_startup():
     """Действия при запуске бота"""
     logging.info("Бот запущен")
-    # Отправляем уведомление девушке о запуске бота
     await bot.send_message(
         GIRL_ID,
-        "🤖 Бот для квеста (1-7 марта) запущен и готов к работе!\n"
-        "Используй /status для проверки состояния"
+        "🤖 Бот для квеста (1-7 марта) запущен!\n"
+        "Используй /status для проверки"
     )
 
 async def on_shutdown():
