@@ -136,18 +136,41 @@ async def start_handler(message: Message):
 
 @dp.message(F.text == "/status")
 async def status_command(message: Message):
-    """Проверка статуса квеста (только для девушки)"""
+    """Проверка статуса квеста (только для вас)"""
     if message.from_user.id == GIRL_ID:
         today = datetime.now().strftime("%Y-%m-%d")
-        await message.answer(
-            f"📊 <b>Статус квеста:</b>\n\n"
+        current_time = datetime.now().strftime("%H:%M:%S")
+        
+        status_text = (
+            f"📊 <b>СТАТУС КВЕСТА</b>\n\n"
             f"Активирован: {'✅' if started else '❌'}\n"
             f"Текущий день: {current_day}\n"
             f"Сегодня: {today}\n"
-            f"Загадок всего: {len(riddles)}"
+            f"Время: {current_time}\n"
         )
+        await message.answer(status_text)
     else:
         await message.answer("Эта команда только для организатора 😉")
+
+
+# ================= РУЧНАЯ ОТПРАВКА ЗАГАДКИ (ДЛЯ ВАС) =================
+
+@dp.message(F.text == "/send")
+async def manual_send(message: Message):
+    """Ручная отправка загадки (только для вас)"""
+    if message.from_user.id == GIRL_ID:
+        today = datetime.now().strftime("%Y-%m-%d")
+        
+        # Ищем загадку на сегодня
+        for day, data in riddles.items():
+            if data["date"] == today:
+                await bot.send_message(BOY_ID, data["question"])
+                await message.answer(f"✅ Загадка дня {day} отправлена!")
+                return
+        
+        await message.answer("❌ На сегодня загадок нет в расписании")
+    else:
+        await message.answer("Эта команда только для организатора")
 
 
 # ================= ПРОВЕРКА ОТВЕТОВ =================
@@ -223,10 +246,9 @@ async def send_daily_riddle():
     global started
     
     today = datetime.now().strftime("%Y-%m-%d")
-    logging.info(f"Проверка загадок на {today}")
+    current_time = datetime.now().strftime("%H:%M")
     
     if not started:
-        logging.info("Квест не активирован")
         return
     
     # Ищем загадку на сегодня
@@ -236,31 +258,19 @@ async def send_daily_riddle():
                 await bot.send_message(BOY_ID, data["question"])
                 await bot.send_message(
                     GIRL_ID,
-                    f"📨 Отправлена загадка на {today} (день {day})"
+                    f"📨 Автоотправка: загадка дня {day} в {current_time}"
                 )
-                logging.info(f"Отправлена загадка на день {day}")
                 return
-    
-    logging.info("На сегодня загадок нет")
 
 
 # ================= ЗАПУСК =================
 
 async def on_startup():
     """Действия при запуске бота"""
-    logging.info("Бот запущен")
     await bot.send_message(
         GIRL_ID,
-        "🤖 Бот для квеста (1-7 марта) запущен!\n"
-        "Используй /status для проверки"
-    )
-
-async def on_shutdown():
-    """Действия при остановке бота"""
-    logging.info("Бот остановлен")
-    await bot.send_message(
-        GIRL_ID,
-        "🔄 Бот остановлен"
+        "🤖 Бот для квеста запущен!\n"
+        "Команды: /status, /send"
     )
 
 async def main():
@@ -270,21 +280,18 @@ async def main():
     # Настраиваем планировщик
     scheduler.add_job(
         send_daily_riddle,
-        trigger=CronTrigger(hour=14, minute=0),  # Отправка в 14:00 каждый день
-        id="daily_riddle",
-        replace_existing=True
+        "cron",
+        hour=14,
+        minute=0
     )
     scheduler.start()
-    logging.info("Планировщик запущен")
     
     # Уведомление о запуске
     await on_startup()
     
     try:
-        # Запускаем поллинг
         await dp.start_polling(bot)
     finally:
-        await on_shutdown()
         scheduler.shutdown()
 
 
